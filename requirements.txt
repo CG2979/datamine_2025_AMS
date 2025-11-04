@@ -1,5 +1,5 @@
 streamlit
 pandas
 rapidfuzz
-st-aggrid
+streamlit-aggrid
 numpy
