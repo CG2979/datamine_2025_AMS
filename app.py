@@ -410,14 +410,11 @@ if st.session_state["auto_cleaned"] and st.session_state["cleaning_report"]:
     report = st.session_state["cleaning_report"]
     
     with st.expander("Auto-Cleaning Report", expanded=True):
-        col1, col2, col3 = st.columns(3)
+        col1, col2 = st.columns(2)
         with col1:
             st.metric("Original Rows", report["original_rows"])
         with col2:
             st.metric("Cleaned Rows", report["final_rows"])
-        with col3:
-            rows_removed = report["original_rows"] - report["final_rows"]
-            st.metric("Rows Removed", rows_removed, delta=f"-{rows_removed}")
         
         if report["actions"]:
             st.markdown("**Actions Taken:**")
