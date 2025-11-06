@@ -5,7 +5,7 @@ import re
 import numpy as np
 
 # --- App setup ---
-st.set_page_config(page_title="Job Title Cleaning App", layout="wide")
+st.set_page_config(page_title="Survey Data Cleaning App", layout="wide")
 
 # --- Initialize session state ---
 if "history" not in st.session_state:
