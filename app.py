@@ -136,7 +136,7 @@ def auto_detect_job_title_column(df):
     for col in df.columns:
         col_lower = col.lower()
         # Check column name
-        if any(keyword in col_lower for keyword in ['title', 'position', 'job', 'role', 'designation']):
+        if any(keyword in col_lower for keyword in ['title', 'position', 'job', 'role', 'designation', 'emp']):
             candidates.append((col, 100))
         
         # Check content patterns
@@ -338,8 +338,8 @@ def auto_cluster_titles(titles, threshold=90):
 
 # --- Sidebar ---
 with st.sidebar:
-    st.title("Smart Data Cleaner")
-    st.markdown("*Automatically cleans your data*")
+    st.title("Survey Data Cleaner")
+    st.markdown("*Automatically combines equivalent job titles and cleans numerical data*")
     st.markdown("---")
     
     # File upload
@@ -402,7 +402,7 @@ df = st.session_state["df"]
 columns = df.columns.tolist()
 
 # --- Main content ---
-st.title("Smart Job Title Cleaner")
+st.title("Survey Data Cleaner")
 
 # Show cleaning report if auto-cleaned
 if st.session_state["auto_cleaned"] and st.session_state["cleaning_report"]:
@@ -428,7 +428,7 @@ tab1, tab2, tab3 = st.tabs(["Title Cleaning", "Data Overview", "Export"])
 
 # --- TAB 1: Smart Title Cleaning ---
 with tab1:
-    st.subheader("Intelligent Job Title Clustering")
+    st.subheader("Job Title Clustering")
     
     # Auto-detect job title column
     detected_col = auto_detect_job_title_column(df)
@@ -857,6 +857,6 @@ with tab3:
             mime="text/csv",
             type="primary"
         )
-        st.success("Cleaned data ready for download!")
+        st.success("Cleaned data ready for download.")
     else:
         st.info("No cleaned mappings found. Try running Auto-Cluster first in the Title Cleaning tab.")
