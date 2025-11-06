@@ -136,7 +136,7 @@ def auto_detect_job_title_column(df):
     for col in df.columns:
         col_lower = col.lower()
         # Check column name
-        if any(keyword in col_lower for keyword in ['title', 'position', 'job', 'role', 'designation', 'emp']):
+        if any(keyword in col_lower for keyword in ['title', 'position', 'job', 'role', 'designation', 'Emp_Position_Title']):
             candidates.append((col, 100))
         
         # Check content patterns
