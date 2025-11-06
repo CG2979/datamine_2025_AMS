@@ -849,9 +849,9 @@ with tab3:
         # Allow user to download the cleaned file
         csv = df_export.to_csv(index=False).encode("utf-8")
         st.download_button(
-            label="📥 Download Cleaned CSV",
+            label="Download Cleaned CSV",
             data=csv,
-            file_name="cleaned_job_titles.csv",
+            file_name="cleaned_data.csv",
             mime="text/csv",
             type="primary"
         )
