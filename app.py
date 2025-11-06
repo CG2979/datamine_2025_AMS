@@ -394,7 +394,7 @@ with st.sidebar:
             st.rerun()
 
 if st.session_state["df"] is None:
-    st.title("Smart Job Title Cleaner")
+    st.title("Survey Data Cleaner")
     st.info("Upload a CSV file to get started")
     st.stop()
 
