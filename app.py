@@ -128,6 +128,23 @@ def auto_detect_job_title_column(df):
 def auto_cluster_titles(titles, threshold=90):
     """Automatically cluster and clean job titles with smart typo correction"""
     
+    # First, separate postdoctoral titles from others
+    def is_postdoc_title(title):
+        """Check if a title is postdoctoral-related"""
+        t = str(title).lower()
+        return (
+            'postdoctoral' in t or
+            'postdoc fellow' in t or
+            'post-doc fellow' in t or
+            'post doctoral fellow' in t or
+            'post doc' in t or
+            'postdoctor' in t
+        )
+    
+    postdoc_mask = titles.map(is_postdoc_title)
+    postdoc_titles = titles[postdoc_mask]
+    non_postdoc_titles = titles[~postdoc_mask]
+    
     # Common abbreviations and typos to fix
     REPLACEMENTS = {
         # Common abbreviations
@@ -211,7 +228,7 @@ def auto_cluster_titles(titles, threshold=90):
         # Postdoctoral positions
         "postdoctoral",
         # Research positions
-        "research scientist", "research associate", "research assistant",
+        "research scientist", "research fellow", "research associate", "research assistant",
         # Director positions
         "director", "associate director", "assistant director",
         # Other positions
@@ -226,6 +243,7 @@ def auto_cluster_titles(titles, threshold=90):
         # Remove extra spaces
         t = re.sub(r"\s+", " ", t).strip()
         
+        # Special handling for postdoctoral - return early
         if re.search(r"\bpostdoctoral\b", t):
             return "postdoctoral"
             
@@ -252,14 +270,14 @@ def auto_cluster_titles(titles, threshold=90):
         return t
 
     
-    # Apply normalization
-    normalized_titles = titles.map(normalize_title)
+    # Apply normalization to NON-POSTDOC titles only
+    normalized_titles = non_postdoc_titles.map(normalize_title)
     unique_norm_titles = normalized_titles.unique()
     
     # Also create a cleaned version of titles for canonical selection
-    cleaned_titles = titles.map(fix_typos_and_abbrev)
+    cleaned_titles = non_postdoc_titles.map(fix_typos_and_abbrev)
     
-    # Cluster similar titles
+    # Cluster similar NON-POSTDOC titles
     clusters = []
     seen = set()
     
@@ -275,15 +293,19 @@ def auto_cluster_titles(titles, threshold=90):
         
         # Get both original AND cleaned versions for this cluster
         mask = normalized_titles.isin(cluster)
-        full_titles = titles[mask].unique().tolist()
+        full_titles = non_postdoc_titles[mask].unique().tolist()
         full_titles_cleaned = cleaned_titles[mask].unique().tolist()
         
         # Store both for later use
         clusters.append((full_titles, full_titles_cleaned))
     
-# Auto-generate canonical titles with proper expansion
+    # Add one cluster for ALL postdoctoral titles at the end
+    if len(postdoc_titles) > 0:
+        postdoc_list = postdoc_titles.unique().tolist()
+        clusters.append((postdoc_list, postdoc_list))
+    
+    # Auto-generate canonical titles with proper expansion
     mapping = {}
-    postdoc_titles = []  # Collect all postdoc/fellow titles
     
     for cluster_orig, cluster_cleaned in clusters:
         # Use cleaned titles to pick canonical
@@ -296,24 +318,13 @@ def auto_cluster_titles(titles, threshold=90):
         if not expanded_titles:
             continue
         
-        # Check if cluster contains postdoctoral - merge all into "Postdoctoral"
-        # Check ORIGINAL titles, not cleaned/expanded ones
-        has_postdoc = any('postdoctoral' in str(t).lower() for t in cluster_orig)
+        # Check if this is the postdoctoral cluster (check original titles)
+        is_postdoc_cluster = any(is_postdoc_title(t) for t in cluster_orig)
         
-        # Check for postdoc-related fellow titles in ORIGINAL titles
-        if not has_postdoc:
-            has_postdoc = any(
-                'postdoctoral fellow' in str(t).lower() or 
-                'postdoc fellow' in str(t).lower() or
-                'post-doc fellow' in str(t).lower() or
-                'post doctoral fellow' in str(t).lower() or
-                'post doc' in str(t).lower()
-                for t in cluster_orig
-            )
-        
-        if has_postdoc:
-            # Add all titles from this cluster to postdoc collection
-            postdoc_titles.extend(cluster_orig)
+        if is_postdoc_cluster:
+            # Map all postdoc titles to "Postdoctoral"
+            for title in cluster_orig:
+                mapping[title] = "Postdoctoral"
             continue  # Skip to next cluster
         
         # Normal processing for non-postdoc clusters
@@ -344,10 +355,6 @@ def auto_cluster_titles(titles, threshold=90):
         # Map all ORIGINAL titles to this canonical
         for title in cluster_orig:
             mapping[title] = canonical
-    
-    # Map all postdoc/fellow titles to "Postdoctoral"
-    for title in postdoc_titles:
-        mapping[title] = "Postdoctoral"
     
     return clusters, mapping
 # --- Sidebar ---
