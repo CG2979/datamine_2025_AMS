@@ -317,7 +317,10 @@ def auto_cluster_titles(titles, threshold=90):
             # If no candidates after filtering, use all titles
             if not candidates:
                 candidates = expanded_titles
-        
+                
+            if not candidates:
+                continue
+                
         # Pick the shortest expanded title
         canonical_expanded = min(candidates, key=len)
         
