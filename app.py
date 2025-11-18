@@ -288,6 +288,14 @@ def auto_cluster_titles(titles, threshold=90):
     for cluster_orig, cluster_cleaned in clusters:
         # Use cleaned titles to pick canonical
         expanded_titles = cluster_cleaned
+
+             # Filter out empty, nan, or whitespace-only titles
+        expanded_titles = [t for t in expanded_titles if t and str(t).strip() and str(t).lower() not in ['nan', 'none', '']]
+        
+        # Skip if no valid titles remain
+        if not expanded_titles:
+            continue
+            
         # Check if cluster contains postdoctoral or fellow - merge all into "Postdoctoral"
         has_postdoc = any('postdoctoral' in t.lower() or 'fellow' in t.lower() for t in expanded_titles)
         
