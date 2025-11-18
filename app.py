@@ -211,7 +211,7 @@ def auto_cluster_titles(titles, threshold=90):
         # Postdoctoral positions
         "postdoctoral",
         # Research positions
-        "research scientist", "research fellow", "research associate", "research assistant",
+        "research scientist", "research associate", "research assistant",
         # Director positions
         "director", "associate director", "assistant director",
         # Other positions
@@ -294,20 +294,21 @@ def auto_cluster_titles(titles, threshold=90):
         if has_postdoc:
             # Add all titles from this cluster to postdoc collection
             postdoc_titles.extend(cluster_orig)
-            continue  # Skip normal processing for these     
-        # Check if "visiting" appears in majority of titles
-        visiting_count = sum(1 for t in expanded_titles if 'visiting' in t.lower())
-        has_visiting = visiting_count > len(cluster_orig) / 2
-        
-        # Filter candidates based on visiting presence
-        if has_visiting:
-            candidates = [exp for exp in expanded_titles if 'visiting' in exp.lower()]
         else:
-            candidates = [exp for exp in expanded_titles if 'visiting' not in exp.lower()]
-        
-        # If no candidates after filtering, use all titles
-        if not candidates:
-            candidates = expanded_titles
+            # Normal processing for non-postdoc clusters
+            # Check if "visiting" appears in majority of titles
+            visiting_count = sum(1 for t in expanded_titles if 'visiting' in t.lower())
+            has_visiting = visiting_count > len(cluster_orig) / 2
+            
+            # Filter candidates based on visiting presence
+            if has_visiting:
+                candidates = [exp for exp in expanded_titles if 'visiting' in exp.lower()]
+            else:
+                candidates = [exp for exp in expanded_titles if 'visiting' not in exp.lower()]
+            
+            # If no candidates after filtering, use all titles
+            if not candidates:
+                candidates = expanded_titles
         
         # Pick the shortest expanded title
         canonical_expanded = min(candidates, key=len)
