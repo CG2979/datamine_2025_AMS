@@ -95,30 +95,6 @@ def auto_clean_dataframe(df):
             if original_missing > 0:
                 report["actions"].append(f"Cleaned '{col}': filled {original_missing} missing values with empty string")
     
-    # 6. Smart missing value handling for other columns
-    missing_filled = 0
-    for col in df.columns:
-        # Skip already processed age and gender columns
-        if col in age_cols or col in gender_cols:
-            continue
-            
-        missing_pct = df[col].isnull().sum() / len(df)
-        
-        if missing_pct > 0:
-            # If less than 5% missing, fill intelligently
-            if missing_pct < 0.05:
-                if pd.api.types.is_numeric_dtype(df[col]):
-                    df[col] = df[col].fillna(df[col].median())
-                    missing_filled += 1
-                elif pd.api.types.is_object_dtype(df[col]):
-                    mode_val = df[col].mode()
-                    if len(mode_val) > 0:
-                        df[col] = df[col].fillna(mode_val[0])
-                        missing_filled += 1
-    
-    if missing_filled > 0:
-        report["actions"].append(f"Auto-filled missing values in {missing_filled} other columns (< 5% missing)")
-    
     report["final_rows"] = len(df)
     report["final_cols"] = len(df.columns)
     
