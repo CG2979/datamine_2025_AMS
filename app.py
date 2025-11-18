@@ -284,43 +284,45 @@ def auto_cluster_titles(titles, threshold=90):
     # Auto-generate canonical titles with proper expansion
     mapping = {}
     postdoc_titles = []  # Collect all postdoc/fellow titles
-
+    
     for cluster_orig, cluster_cleaned in clusters:
         # Use cleaned titles to pick canonical
         expanded_titles = cluster_cleaned
-
-             # Filter out empty, nan, or whitespace-only titles
+        
+        # Filter out empty, nan, or whitespace-only titles
         expanded_titles = [t for t in expanded_titles if t and str(t).strip() and str(t).lower() not in ['nan', 'none', '']]
         
         # Skip if no valid titles remain
         if not expanded_titles:
             continue
-            
+        
         # Check if cluster contains postdoctoral or fellow - merge all into "Postdoctoral"
         has_postdoc = any('postdoctoral' in t.lower() or 'fellow' in t.lower() for t in expanded_titles)
         
         if has_postdoc:
             # Add all titles from this cluster to postdoc collection
             postdoc_titles.extend(cluster_orig)
+            continue  # Skip to next cluster
+        
+        # Normal processing for non-postdoc clusters
+        # Check if "visiting" appears in majority of titles
+        visiting_count = sum(1 for t in expanded_titles if 'visiting' in t.lower())
+        has_visiting = visiting_count > len(cluster_orig) / 2
+        
+        # Filter candidates based on visiting presence
+        if has_visiting:
+            candidates = [exp for exp in expanded_titles if 'visiting' in exp.lower()]
         else:
-            # Normal processing for non-postdoc clusters
-            # Check if "visiting" appears in majority of titles
-            visiting_count = sum(1 for t in expanded_titles if 'visiting' in t.lower())
-            has_visiting = visiting_count > len(cluster_orig) / 2
-            
-            # Filter candidates based on visiting presence
-            if has_visiting:
-                candidates = [exp for exp in expanded_titles if 'visiting' in exp.lower()]
-            else:
-                candidates = [exp for exp in expanded_titles if 'visiting' not in exp.lower()]
-            
-            # If no candidates after filtering, use all titles
-            if not candidates:
-                candidates = expanded_titles
-                
-            if not candidates:
-                continue
-                
+            candidates = [exp for exp in expanded_titles if 'visiting' not in exp.lower()]
+        
+        # If no candidates after filtering, use all titles
+        if not candidates:
+            candidates = expanded_titles
+        
+        # Safety check - skip if still no candidates
+        if not candidates:
+            continue
+        
         # Pick the shortest expanded title
         canonical_expanded = min(candidates, key=len)
         
@@ -330,6 +332,10 @@ def auto_cluster_titles(titles, threshold=90):
         # Map all ORIGINAL titles to this canonical
         for title in cluster_orig:
             mapping[title] = canonical
+    
+    # Map all postdoc/fellow titles to "Postdoctoral"
+    for title in postdoc_titles:
+        mapping[title] = "Postdoctoral"
     
     return clusters, mapping
 
