@@ -208,7 +208,7 @@ def auto_cluster_titles(titles, threshold=90):
         "lecturer", "assistant professor", "associate professor", "professor",
         "instructor",
         # Postdoctoral positions
-        "postdoctoral fellow", "postdoctoral researcher", "postdoctoral associate",
+        "postdoctoral",
         # Research positions
         "research scientist", "research fellow", "research associate", "research assistant",
         # Director positions
