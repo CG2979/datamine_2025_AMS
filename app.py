@@ -156,6 +156,7 @@ def auto_cluster_titles(titles, threshold=90):
         r'\bpostdoctor\b': 'postdoctoral',
         r'\bpostdoctorate\b': 'postdoctoral',
         r'\bPost Doc\b': 'postdoctoral',
+        r'\bpost doc\b': 'postdoctoral',
         
         # Common typos
         r'\breserch\b': 'research',
@@ -731,6 +732,47 @@ with tab1:
 # --- TAB 2: Data Overview ---
 with tab2:
     st.subheader("Dataset Overview")
+        # Top 100 Job Titles Section
+    st.markdown("### Top 100 Job Titles")
+    
+    # Auto-detect or use selected job title column
+    if st.session_state.get("last_selected_col") and st.session_state["last_selected_col"] in df.columns:
+        job_col = st.session_state["last_selected_col"]
+    else:
+        job_col = auto_detect_job_title_column(df)
+    
+    if job_col and job_col in df.columns:
+        # Get value counts for job titles
+        title_counts = df[job_col].value_counts().head(100)
+        
+        # Create a dataframe for display
+        top_titles_df = pd.DataFrame({
+            'Rank': range(1, len(title_counts) + 1),
+            'Job Title': title_counts.index,
+            'Count': title_counts.values
+        })
+        
+        st.markdown(f"**Showing top titles from column:** `{job_col}`")
+        st.dataframe(
+            top_titles_df,
+            use_container_width=True,
+            height=500,
+            hide_index=True
+        )
+        
+        # Summary stats
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Total Unique Titles", len(df[job_col].unique()))
+        with col2:
+            st.metric("Top 100 Total Records", title_counts.sum())
+        with col3:
+            coverage = (title_counts.sum() / len(df)) * 100
+            st.metric("Coverage", f"{coverage:.1f}%")
+    else:
+        st.info("No job title column detected. Please run Auto-Cluster in the Title Cleaning tab first.")
+    
+    st.markdown("---")
     
     # Age and Gender Analysis Section
     age_cols = [col for col in df.columns if 'age' in col.lower()]
