@@ -145,7 +145,7 @@ def auto_cluster_titles(titles, threshold=90):
         r'\bdir\.?\b': 'director',
         r'\bmgr\.?\b': 'manager',
         
-        # Postdoc variations - normalize to just "postdoctoral" (fellow will be added by title if present)
+        # Postdoc variations - normalize to just "postdoctoral" 
         r'\bpos-doc\b': 'postdoctoral',
         r'\bpost-doc\b': 'postdoctoral',
         r'\bpostdoc\b': 'postdoctoral',
