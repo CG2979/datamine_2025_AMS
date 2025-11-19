@@ -593,7 +593,7 @@ with tab1:
             
             st.dataframe(variations_df, use_container_width=True, height=300, hide_index=True)
             
-            # Move variation to another cluster
+             # Move variation to another cluster
             st.markdown("---")
             st.markdown("**Move a variation to another cluster:**")
             
@@ -612,107 +612,77 @@ with tab1:
                 current_canonical = mapping.get(current_cluster_orig[0], current_cluster_orig[0])
                 other_canonicals = [c for c in all_canonicals if c != current_canonical]
                 
-                # Add option to create new cluster
-                cluster_options = ["--- Create New Cluster ---"] + (other_canonicals if other_canonicals else [])
+                # Create a mapping from cluster index to canonical title
+                cluster_idx_to_canonical = {}
+                for i, (cluster_orig, cluster_cleaned) in enumerate(clusters):
+                    canon = mapping.get(cluster_orig[0], cluster_orig[0])
+                    if canon != current_canonical:
+                        cluster_idx_to_canonical[i] = canon
                 
-                target_canonical = st.selectbox(
-                    "Move to cluster:",
-                    cluster_options,
-                    key=f"target_cluster_{cluster_idx}"
+                target_cluster_input = st.text_input(
+                    "Move to cluster index (or -1 for new):",
+                    value="",
+                    key=f"target_cluster_{cluster_idx}",
+                    help=f"Enter a cluster index (0-{len(clusters)-1}) or -1 to create a new cluster"
                 )
             
             with col3:
                 st.write("")
                 st.write("")
                 if st.button("Move", key=f"move_btn_{cluster_idx}"):
-                    if target_canonical == "--- Create New Cluster ---":
-                        # Create a new cluster with this variation
-                        # Use the variation itself as the canonical title (properly capitalized)
-                        new_canonical = ' '.join(word.capitalize() for word in variation_to_move.split())
-                        st.session_state["mapping"][variation_to_move] = new_canonical
+                    try:
+                        target_idx = int(target_cluster_input)
                         
-                        # Rebuild clusters from updated mapping
-                        new_clusters_dict = {}
-                        for orig_title, canon_title in st.session_state["mapping"].items():
-                            if canon_title not in new_clusters_dict:
-                                new_clusters_dict[canon_title] = []
-                            new_clusters_dict[canon_title].append(orig_title)
+                        if target_idx == -1:
+                            # Create a new cluster with this variation
+                            # Use the variation itself as the canonical title (properly capitalized)
+                            new_canonical = ' '.join(word.capitalize() for word in variation_to_move.split())
+                            st.session_state["mapping"][variation_to_move] = new_canonical
+                            
+                            # Rebuild clusters from updated mapping
+                            new_clusters_dict = {}
+                            for orig_title, canon_title in st.session_state["mapping"].items():
+                                if canon_title not in new_clusters_dict:
+                                    new_clusters_dict[canon_title] = []
+                                new_clusters_dict[canon_title].append(orig_title)
+                            
+                            # Convert back to list of tuples format
+                            new_clusters = []
+                            for canon, origs in new_clusters_dict.items():
+                                new_clusters.append((origs, origs))  # simplified
+                            
+                            st.session_state["clusters"] = new_clusters
+                            st.success(f"Created new cluster with '{new_canonical}'")
+                            st.rerun()
+                        elif 0 <= target_idx < len(clusters):
+                            target_canonical = mapping.get(clusters[target_idx][0][0], clusters[target_idx][0][0])
+                            
+                            if target_canonical == current_canonical:
+                                st.warning("Cannot move to the same cluster")
+                            else:
+                                # Update the mapping for this variation
+                                st.session_state["mapping"][variation_to_move] = target_canonical
+                                
+                                # Rebuild clusters from updated mapping
+                                new_clusters_dict = {}
+                                for orig_title, canon_title in st.session_state["mapping"].items():
+                                    if canon_title not in new_clusters_dict:
+                                        new_clusters_dict[canon_title] = []
+                                    new_clusters_dict[canon_title].append(orig_title)
+                                
+                                # Convert back to list of tuples format
+                                new_clusters = []
+                                for canon, origs in new_clusters_dict.items():
+                                    new_clusters.append((origs, origs))  # simplified
+                                
+                                st.session_state["clusters"] = new_clusters
+                                st.success(f"Moved '{variation_to_move}' to cluster {target_idx}: '{target_canonical}'")
+                                st.rerun()
+                        else:
+                            st.error(f"Invalid cluster index. Enter 0-{len(clusters)-1} or -1 for new cluster")
+                    except ValueError:
+                        st.error("Please enter a valid number")
                         
-                        # Convert back to list of tuples format
-                        new_clusters = []
-                        for canon, origs in new_clusters_dict.items():
-                            new_clusters.append((origs, origs))  # simplified
-                        
-                        st.session_state["clusters"] = new_clusters
-                        st.success(f"Created new cluster with '{new_canonical}'")
-                        st.rerun()
-                    elif other_canonicals:
-                        # Update the mapping for this variation
-                        st.session_state["mapping"][variation_to_move] = target_canonical
-                        
-                        # Rebuild clusters from updated mapping
-                        new_clusters_dict = {}
-                        for orig_title, canon_title in st.session_state["mapping"].items():
-                            if canon_title not in new_clusters_dict:
-                                new_clusters_dict[canon_title] = []
-                            new_clusters_dict[canon_title].append(orig_title)
-                        
-                        # Convert back to list of tuples format
-                        new_clusters = []
-                        for canon, origs in new_clusters_dict.items():
-                            new_clusters.append((origs, origs))  # simplified
-                        
-                        st.session_state["clusters"] = new_clusters
-                        st.success(f"Moved '{variation_to_move}' to '{target_canonical}'")
-                        st.rerun()
-                    else:
-                        st.warning("No other clusters available")
-            
-            # Option to create new cluster with custom name
-            st.markdown("**Or create a new cluster with a custom name:**")
-            col1, col2, col3 = st.columns([2, 2, 1])
-            
-            with col1:
-                variation_for_new = st.selectbox(
-                    "Select variation:",
-                    current_cluster_orig,
-                    key=f"new_cluster_var_{cluster_idx}"
-                )
-            
-            with col2:
-                new_cluster_name = st.text_input(
-                    "New cluster name:",
-                    value=' '.join(word.capitalize() for word in variation_for_new.split()),
-                    key=f"new_cluster_name_{cluster_idx}",
-                    help="Enter the canonical title for the new cluster"
-                )
-            
-            with col3:
-                st.write("")
-                st.write("")
-                if st.button("Create New", key=f"create_new_btn_{cluster_idx}"):
-                    if new_cluster_name.strip():
-                        # Create new cluster with custom name
-                        st.session_state["mapping"][variation_for_new] = new_cluster_name.strip()
-                        
-                        # Rebuild clusters from updated mapping
-                        new_clusters_dict = {}
-                        for orig_title, canon_title in st.session_state["mapping"].items():
-                            if canon_title not in new_clusters_dict:
-                                new_clusters_dict[canon_title] = []
-                            new_clusters_dict[canon_title].append(orig_title)
-                        
-                        # Convert back to list of tuples format
-                        new_clusters = []
-                        for canon, origs in new_clusters_dict.items():
-                            new_clusters.append((origs, origs))  # simplified
-                        
-                        st.session_state["clusters"] = new_clusters
-                        st.success(f"Created new cluster: '{new_cluster_name.strip()}'")
-                        st.rerun()
-                    else:
-                        st.warning("Please enter a cluster name")
-        
         # Merge clusters functionality
         st.markdown("---")
         st.markdown("### Merge Multiple Clusters")
