@@ -766,7 +766,7 @@ with tab2:
     st.subheader("Dataset Overview")
     
     # Top 100 Job Titles Section
-    st.markdown("### Top 100 Job Titles")
+    st.markdown("### Top 200 Job Titles")
     
     # Auto-detect or use selected job title column
     if st.session_state.get("last_selected_col") and st.session_state["last_selected_col"] in df.columns:
@@ -780,11 +780,11 @@ with tab2:
             # Use canonical titles
             df_with_canonical = df.copy()
             df_with_canonical[job_col] = df_with_canonical[job_col].replace(st.session_state["mapping"])
-            title_counts = df_with_canonical[job_col].value_counts().head(100)
+            title_counts = df_with_canonical[job_col].value_counts().head(200)
             title_type = "Canonical"
         else:
             # Use original titles
-            title_counts = df[job_col].value_counts().head(100)
+            title_counts = df[job_col].value_counts().head(200)
             title_type = "Original"
         
         # Create a dataframe for display
@@ -814,7 +814,7 @@ with tab2:
             else:
                 st.metric("Total Unique Titles", len(df[job_col].unique()))
         with col2:
-            st.metric("Top 100 Total Records", title_counts.sum())
+            st.metric("Top 200 Total Records", title_counts.sum())
         with col3:
             coverage = (title_counts.sum() / len(df)) * 100
             st.metric("Coverage", f"{coverage:.1f}%")
