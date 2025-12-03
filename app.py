@@ -26,12 +26,7 @@ if "selected_cluster" not in st.session_state:
 # --- Auto-cleaning functions ---
 def auto_clean_dataframe(df):
     """Automatically clean the dataframe with smart defaults"""
-     = {
-        "original_rows": len(df),
-        "original_cols": len(df.columns),
-        "actions": []
-    }
-    
+
     # 1. Remove completely empty rows
     empty_rows = df.isnull().all(axis=1).sum()
     if empty_rows > 0:
