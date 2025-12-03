@@ -20,15 +20,13 @@ if "original_df" not in st.session_state:
     st.session_state["original_df"] = None
 if "auto_cleaned" not in st.session_state:
     st.session_state["auto_cleaned"] = False
-if "cleaning_report" not in st.session_state:
-    st.session_state["cleaning_report"] = {}
 if "selected_cluster" not in st.session_state:
     st.session_state["selected_cluster"] = None
 
 # --- Auto-cleaning functions ---
 def auto_clean_dataframe(df):
     """Automatically clean the dataframe with smart defaults"""
-    report = {
+     = {
         "original_rows": len(df),
         "original_cols": len(df.columns),
         "actions": []
@@ -38,7 +36,7 @@ def auto_clean_dataframe(df):
     empty_rows = df.isnull().all(axis=1).sum()
     if empty_rows > 0:
         df = df.dropna(how='all')
-        report["actions"].append(f"Removed {empty_rows} completely empty rows")
+
     
     # 3. Clean text columns automatically
     text_cols_cleaned = 0
@@ -57,9 +55,6 @@ def auto_clean_dataframe(df):
             if not df[col].equals(original):
                 text_cols_cleaned += 1
     
-    if text_cols_cleaned > 0:
-        report["actions"].append(f"Auto-cleaned {text_cols_cleaned} text columns (whitespace, extra spaces)")
-    
     # 4. Clean Age columns
     age_cols = [col for col in df.columns if 'age' in col.lower()]
     for col in age_cols:
@@ -75,12 +70,6 @@ def auto_clean_dataframe(df):
             # Set invalid ages (< 20 or > 100) to 0
             invalid_count = ((df[col] > 100) | (df[col] < 20)).sum()
             df.loc[(df[col] > 100) | (df[col] < 20), col] = 0
-            
-            if invalid_count > 0 or original_missing > 0:
-                report["actions"].append(
-                    f"Cleaned '{col}': filled {original_missing} missing, "
-                    f"reset {invalid_count} invalid ages (< 20 or > 100) to 0"
-                )
     
     # 5. Clean Gender columns
     gender_cols = [col for col in df.columns if 'gender' in col.lower()]
@@ -91,14 +80,8 @@ def auto_clean_dataframe(df):
             # Convert to string and fill NaN with empty string
             df[col] = df[col].astype(str).replace('nan', '')
             df[col] = df[col].fillna('')
-            
-            if original_missing > 0:
-                report["actions"].append(f"Cleaned '{col}': filled {original_missing} missing values with empty string")
     
-    report["final_rows"] = len(df)
-    report["final_cols"] = len(df.columns)
-    
-    return df, report
+    return df
 
 def auto_detect_job_title_column(df):
     """Automatically detect which column likely contains job titles"""
@@ -390,9 +373,8 @@ with st.sidebar:
             st.session_state["original_df"] = raw_df.copy()
             
             # Auto-clean immediately
-            cleaned_df, report = auto_clean_dataframe(raw_df)
+            cleaned_df = auto_clean_dataframe(raw_df)
             st.session_state["df"] = cleaned_df
-            st.session_state["cleaning_report"] = report
             st.session_state["auto_cleaned"] = True
         
         st.success("File loaded & cleaned!")
@@ -443,21 +425,6 @@ columns = df.columns.tolist()
 # --- Main content ---
 st.title("Survey Data Cleaner")
 
-# Show cleaning report if auto-cleaned
-if st.session_state["auto_cleaned"] and st.session_state["cleaning_report"]:
-    report = st.session_state["cleaning_report"]
-    
-    with st.expander("Auto-Cleaning Report", expanded=True):
-        col1, col2 = st.columns(2)
-        with col1:
-            st.metric("Original Rows", report["original_rows"])
-        with col2:
-            st.metric("Cleaned Rows", report["final_rows"])
-        
-        if report["actions"]:
-            st.markdown("**Actions Taken:**")
-            for action in report["actions"]:
-                st.markdown(f"- {action}")
 
 # --- Tabs ---
 tab1, tab2, tab3 = st.tabs(["Title Cleaning", "Data Overview", "Export"])
